@@ -1,0 +1,12 @@
+- Sign up
+- Log in
+- Log out
+- Checks invalid email or password on both server and client during both login and signup
+- Request to rent a car (saves requests per account)
+- Prevents rental requests when not signed in
+- Cancel rent request
+- Remains logged in after refreshing
+- file hosting (css, html, images) on local server
+- Designed intuitively (such as options to log out and create listings are only shown when the
+user is logged in, displaying one option (like log in option) hides the rest (like sign up
+and create listings)

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="index.css">
+</head><body>
+<h1 id="header"> FPG4 Car Rentals </h1>
+
+<div id="topbar">
+<p id="showEmail"> </p>
+<button class="topbutton" id = "logoutBtn"> Log Out </button>
+<button class="topbutton" id = "showLogin"> Log in </button>
+<button class="topbutton" id = "showSignup"> Sign Up </button>
+</div>
+
+<div id="loginDiv" class="inputDiv">
+<h2> Log In </h2>
+<p id="loginError" class="errorP"> <p>
+<label> Email </label> <input id="loginEmail" type="text" name="email">
+<label> Password </label> <input id="loginPw" type="password" name="pw">
+<input id="loginBtn" type="button" value="Log in">
+</div>
+
+<div id="signupDiv" class="inputDiv">
+<h2> Sign Up </h2>
+<p> Please enter your email (spaces will be removed), and a password that is at least 8 characters long. </p>
+<p id="signupError" class="errorP"> <p>
+<label> Email </label><input id="signupEmail" type="email" name="email">
+<label> Password </label> <input id="signupPw" type="password" name="pw">
+<input id="signupBtn" type="button" value="Register">
+</div>
+
+
+<div id="listings"> </div>
+
+<p id="footer"> FPG4 &copy; 2022 | Rental Contact: rentals@fpg4.com | Phone: 101-010-1010 </p>
+
+<script>
+let l = document.getElementById("listings");
+let loginID = ""; // Set after the user successfully logs in 
+let curRentals = []; // List of current rentals
+
+
+let curListingID = 0; // keeps track of how many listings are created and assigns them each an ID
+function createListingDisplay(src, carName, price, desc){
+curListingID++;
+let l2 = document.createElement("div");
+l2.class = "listing";
+let c = document.createElement("img");
+c.src = src; c.alt = "car";
+l2.appendChild(c);
+l.appendChild(l2);
+let l3 = document.createElement("div");
+l3.className = "listingInner";
+l2.appendChild(l3);
+let t = document.createElement("p"); t.className = "list-p"; t.innerHTML = "<b><u>"+carName+"</u></b>";
+l3.appendChild(t);
+t = document.createElement("p"); t.className = "list-p"; t.innerHTML = "$" + price + "/day";
+l3.appendChild(t);
+t = document.createElement("p"); t.className = "list-p"; t.innerHTML = "<u>Description:</u> " + desc;
+l3.appendChild(t);
+t = document.createElement("p"); t.className = "list-p"; t.id="list-p"+curListingID; t.innerHTML = "<br> ";
+l3.appendChild(t);
+t = document.createElement("button"); t.className = "list-b"; t.id="list-b"+curListingID; t.innerHTML = "Request Rent";
+l3.appendChild(t);
+}
+
+document.body.onload = () => {
+// imageUrl, Car Name, Price, description
+createListingDisplay("listings/1/Sonata.jpg", "Hyundai Sonata", 81, "4 doors, 5 seats, Automatic, A/C, 27 mpg");
+createListingDisplay("listings/1/dodgegrandcaravan.jpg", "Dodge Grand Caravan", 92, "5 doors, 7 seats, Automatic, A/C, 17 mpg");
+createListingDisplay("listings/1/Toyotacorrola.jpg", "Toyota Corrola", 70, "4 doors, 5 seats, Automatic, A/C, 33.5 mpg", 3);
+createListingDisplay("listings/1/HyundaiElantra.jpg", "Hyundai Elantra", 62, "4 doors, 5 seats, Automatic, A/C, 31.4 mpg");
+createListingDisplay("listings/1/Hondacivic.jpg", "Honda Civic", 57, "4 doors, 5 seats, Automatic, A/C, 32.8 mpg");
+createListingDisplay("listings/1/teslamodelS.jpg", "Tesla Model S", 130, "4 doors, 5 seats, Automatic, A/C, 110 mpg");
+createListingDisplay("listings/1/bmwseries3r.png", "BMW 3 Series", 85, "4 doors, 5 seats, Automatic, A/C, 28 mpg");
+
+ let xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+   if (xhttp.readyState != 4) { return; }
+    if (xhttp.status == 200) {
+     curRentals = xhttp.responseText.split(",");
+     console.log("curRentals", curRentals);
+    }else { errorP.innerHTML = "ERROR (Server): " + xhttp.responseText; }
+ };
+ xhttp.open("POST", "getrent?email="+loginID, false);
+ if(loginID != "") { xhttp.send(); }
+
+ for(let i = 1; i <= curListingID; i++){
+  let btn = document.getElementById("list-b"+i)
+  let action = (curRentals.includes(String(i))? "unrent" : "rent" );
+  if(action != "rent"){ btn.innerHTML = "Cancel Request"; }
+  btn.onclick = () => {
+  let errP = document.getElementById("list-p"+i)
+  if(loginID == "") { errP.innerHTML = "<br><b> Please log in before requesting. </b>"; return; }
+  let xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+   if (xhttp.readyState != 4) { return; }
+    if (xhttp.status == 200) {
+     errP.innerHTML = "<br><b>" + xhttp.responseText + "</b>";
+     if(action == "rent"){ btn.innerHTML = "Cancel Request"; action = "unrent"; }
+     else{ btn.innerHTML = "Request Rent"; action = "rent"; }
+    }else { errorP.innerHTML = "ERROR (Server): " + xhttp.responseText; }
+  };
+  xhttp.open("POST", action+"?email="+loginID+"&id="+i, true);
+  xhttp.send();
+ }
+}
+
+
+
+}
+
+document.getElementById("showLogin").onclick = ()=>{
+ document.getElementById("signupDiv").style.display="none";
+ document.getElementById("loginDiv").style.display="block";
+}
+document.getElementById("showSignup").onclick = ()=>{
+ document.getElementById("signupDiv").style.display="block";
+ document.getElementById("loginDiv").style.display="none";
+}
+document.getElementById("logoutBtn").onclick = () => {
+ loginID = "";
+ document.cookie = "login=; expires=" + (new Date(Date.now() - 1000000)).toUTCString() + ";";
+ window.location.reload();
+}
+
+
+function SetLogin(){ // Checks if user is logged in (cookie)
+ loginID == "";
+ let c = document.cookie.split(";");
+ for(let v of c){ if(v.replaceAll(" ","").startsWith("login=")){ loginID = v.split("=")[1]; break; } }
+ if(loginID == ""){ console.log("noID"); return; }
+ document.getElementById("logoutBtn").style.display = "inline-block"; 
+ document.getElementById("showEmail").innerHTML = "Logged in as: " + loginID;
+}
+SetLogin();
+
+function ValidateEmail(email){
+ let emailParts = email.split("@");
+ if( email.length < 1 ){ return "<br>- Email field is empty"; 
+ }else if(emailParts.length == 1 || emailParts[0].length < 1 || emailParts[1].length < 1) { return "<br>- Email is not valid"; }
+ else{
+  for (let c of emailParts.join("")){ //check alphanumeric or dot
+   if(!"abcdefghijklmnopqrstuvwxyz0123456789.".includes(c.toLowerCase())){ return "<br>- Email is not valid"; }
+  }
+ } return "";
+}
+
+function ValidatePassword(pw){
+ if( pw.length < 1 ){ return "<br>- Password field is empty"; 
+ }else if( pw.length < 8 ) { return "<br>- Password is shorter than 8 characters"; }
+ return "";
+}
+
+function submitEmailPassword(errorP, action, email, pw){
+ errorP.innerHTML = " ";
+ let xhttp = new XMLHttpRequest();
+ xhttp.onreadystatechange = function() {
+  if (xhttp.readyState != 4) { return; }
+   if (xhttp.status == 200) {
+    errorP.innerHTML = xhttp.responseText;
+    if(action == "login"){ SetLogin(); window.location.reload(); }
+   }else { errorP.innerHTML = "ERROR (Server): " + xhttp.responseText; }
+ };
+ xhttp.open("POST", action+"?email="+email+"&pw="+pw, true);
+ xhttp.send();
+}
+
+document.getElementById("loginBtn").onclick = () => {
+ let email = document.getElementById("loginEmail").value;
+ let pw = document.getElementById("loginPw").value;
+ let errorP = document.getElementById("loginError");
+ let err = "";
+ 
+ err += ValidateEmail(email); 
+ err += ValidatePassword(pw);
+ if( err != "" ) { errorP.innerHTML = "ERROR:" + err; return; } //If invalid
+ submitEmailPassword(errorP, "login", email, pw);
+}
+
+document.getElementById("signupBtn").onclick = () => {
+ let email = document.getElementById("signupEmail").value.split(" ").join("");
+ let pw = document.getElementById("signupPw").value;
+ let errorP = document.getElementById("signupError");
+ let err = "";
+ err += ValidateEmail(email); 
+ err += ValidatePassword(pw);
+ if( err != "" ) { errorP.innerHTML = "ERROR:" + err; return; } //If invalid
+ submitEmailPassword(errorP, "signup", email, pw);
+}
+
+</script>
+
+</body></html>
